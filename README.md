@@ -153,8 +153,8 @@ Frontend runs at: `http://localhost:3000`
 ---
 
 ## 📸 Screenshots
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/0ea8ad0a-83cc-4690-87a7-52dc751c4da5" />
 
-*Add your screenshots here*
 
 ---
 
