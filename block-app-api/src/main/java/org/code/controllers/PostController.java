@@ -89,13 +89,25 @@ public class PostController {
     }
     //postphoto
     @PostMapping("/post/image/upload/{postId}")
-    public ResponseEntity<PostDto>uploadPostImage(@RequestParam("image")MultipartFile image
-    ,@PathVariable Integer postId) throws IOException {
-        String fileName = this.fileService.uploadImage(path, image);
-        PostDto postDto = this.postService.findPostById(postId);
-        postDto.setImageName(fileName);
-        PostDto updatedPost = this.postService.updatePost(postDto, postId);
-        return new ResponseEntity<>(updatedPost,HttpStatus.OK);
+    public ResponseEntity<?>uploadPostImage(@RequestParam("image")MultipartFile image
+    ,@PathVariable Integer postId) {
+        try {
+            System.out.println("Uploading image for post: " + postId);
+            System.out.println("Image name: " + image.getOriginalFilename());
+            System.out.println("Image size: " + image.getSize());
+            System.out.println("Image path config: " + path);
+            
+            String fileName = this.fileService.uploadImage(path, image);
+            System.out.println("File saved as: " + fileName);
+            
+            // Just update the image name directly
+            PostDto updatedPost = this.postService.updatePostImage(postId, fileName);
+            return new ResponseEntity<>(updatedPost, HttpStatus.OK);
+        } catch (Exception e) {
+            System.err.println("Image upload failed: " + e.getMessage());
+            e.printStackTrace();
+            return new ResponseEntity<>(new ApiResponse("Image upload failed: " + e.getMessage(), false), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
     @GetMapping(value = "/images/{imageName}", produces = MediaType.IMAGE_JPEG_VALUE)
     public void downloadImage(@PathVariable("imageName") String imageName, HttpServletResponse response) throws IOException {

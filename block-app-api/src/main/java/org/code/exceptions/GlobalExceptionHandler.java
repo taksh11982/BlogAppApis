@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MultipartException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,5 +29,20 @@ public class GlobalExceptionHandler {
            errors.put(field,message);
         });
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+    
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ApiResponse> handleMultipartException(MultipartException ex) {
+        System.err.println("Multipart error: " + ex.getMessage());
+        ex.printStackTrace();
+        return new ResponseEntity<>(new ApiResponse("File upload error: " + ex.getMessage(), false), HttpStatus.BAD_REQUEST);
+    }
+    
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse> handleAllExceptions(Exception ex) {
+        System.err.println("Global exception caught: " + ex.getClass().getName());
+        System.err.println("Message: " + ex.getMessage());
+        ex.printStackTrace();
+        return new ResponseEntity<>(new ApiResponse("Error: " + ex.getMessage(), false), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

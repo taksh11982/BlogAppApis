@@ -1,6 +1,9 @@
 package org.code.security;
 
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -10,11 +13,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import javax.crypto.SecretKey;
+
 @Component
 public class JwtTokenHelper {
 
     public static final long JWT_TOKEN_VALIDITY_SECONDS = 5 * 60 * 60; // 5 hours
-    private final String secretKey = "jwT0kenKeyThatIsReallyLongAndAtLeast64CharactersLongToAvoidWeakKeyError123!";
+    
+    @Value("${jwt.secret:jwT0kenKeyThatIsReallyLongAndAtLeast64CharactersLongToAvoidWeakKeyError123!}")
+    private String secretKey;
 
 
     // 1. Get username from token
@@ -35,9 +42,10 @@ public class JwtTokenHelper {
 
     // 4. Extract all claims
     private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
-                .parseClaimsJws(token) // ✅ Correct method for signed JWTs
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey.getBytes()) // Use bytes for HS256
+                .build()
+                .parseClaimsJws(token) // Correct method for signed JWTs
                 .getBody();
     }
 
@@ -56,14 +64,19 @@ public class JwtTokenHelper {
 
     // 7. Actual token creation
     private String doGenerateToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY_SECONDS * 1000))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
-    }
+
+    SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
+
+    return Jwts.builder()
+            .setClaims(claims)                 // new
+            .setSubject(subject)               // new
+            .setIssuedAt(new Date())
+            .setExpiration(new Date(System.currentTimeMillis() 
+                        + JWT_TOKEN_VALIDITY_SECONDS * 1000))
+            .signWith(key)                  // new style
+            .compact();
+}
+
 
     // 8. Validate token against user details
     public boolean validateToken(String token, UserDetails userDetails) {

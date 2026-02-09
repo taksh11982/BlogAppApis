@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: blog-api
+    runtime: java
+    buildCommand: cd block-app-api && ./mvnw clean package -DskipTests
+    startCommand: cd block-app-api && java -jar -Dspring.profiles.active=prod target/*.jar
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: PORT
+        value: 8081

@@ -11,6 +11,7 @@ import java.util.List;
 public interface PostService {
     PostDto createPost(PostDto postDto,Integer categoryId,Integer userId);
     PostDto updatePost(PostDto postDto,Integer id);
+    PostDto updatePostImage(Integer postId, String imageName);
     PostDto findPostById(int id);
     PostResponse getAllPosts(Integer pageNumber, Integer pageSize,String sortBy);
     void deletePostById(int id);

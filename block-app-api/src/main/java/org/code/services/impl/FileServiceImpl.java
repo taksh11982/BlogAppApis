@@ -11,37 +11,70 @@ import java.util.UUID;
 @Service
 public class FileServiceImpl implements FileService {
     @Override
-    public String uploadImage(String path, MultipartFile file) throws FileNotFoundException, IOException {
-        String name=file.getOriginalFilename();
+    public String uploadImage(String path, MultipartFile file) throws IOException {
+        // Handle null or empty filename
+        String originalFilename = file.getOriginalFilename();
+        System.out.println("Original filename: " + originalFilename);
+        
+        if (originalFilename == null || originalFilename.isEmpty()) {
+            throw new IOException("File name is empty");
+        }
+        
         String randomId = UUID.randomUUID().toString();
-        String concat = randomId.concat(name.substring(name.lastIndexOf(".")));
-        String filePath=path+File.separator+concat;
-        File f=new File(path);
-        if(!f.exists()) {
-            f.mkdirs();
+        
+        // Safely get extension
+        String extension = "";
+        int dotIndex = originalFilename.lastIndexOf(".");
+        if (dotIndex > 0) {
+            extension = originalFilename.substring(dotIndex);
+        } else {
+            extension = ".jpg"; // Default extension
         }
-        try {
-            Files.copy(file.getInputStream(), Paths.get(filePath));
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        
+        String fileName = randomId + extension;
+        
+        // Use absolute path from user directory if relative path given
+        String normalizedPath = path;
+        if (!new File(path).isAbsolute()) {
+            normalizedPath = System.getProperty("user.dir") + File.separator + path;
         }
-
-
-        return randomId;
+        
+        // Remove trailing slashes
+        if (normalizedPath.endsWith("/") || normalizedPath.endsWith("\\")) {
+            normalizedPath = normalizedPath.substring(0, normalizedPath.length() - 1);
+        }
+        
+        String filePath = normalizedPath + File.separator + fileName;
+        
+        // Create directory if it doesn't exist
+        File directory = new File(normalizedPath);
+        if (!directory.exists()) {
+            boolean created = directory.mkdirs();
+            System.out.println("Created directory: " + normalizedPath + " - " + created);
+        }
+        
+        // Copy file
+        System.out.println("Saving file to: " + filePath);
+        Files.copy(file.getInputStream(), Paths.get(filePath));
+        System.out.println("File saved successfully: " + fileName);
+        
+        return fileName;
     }
 
 
     @Override
     public InputStream getSource(String path, String fileName) throws FileNotFoundException, IOException {
-        String fullPath = path + File.separator + fileName;
-        InputStream is = null;
-        try {
-            is = new FileInputStream(fullPath);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        // Use absolute path if relative
+        String normalizedPath = path;
+        if (!new File(path).isAbsolute()) {
+            normalizedPath = System.getProperty("user.dir") + File.separator + path;
         }
-        return is;
+        if (normalizedPath.endsWith("/") || normalizedPath.endsWith("\\")) {
+            normalizedPath = normalizedPath.substring(0, normalizedPath.length() - 1);
+        }
+        
+        String fullPath = normalizedPath + File.separator + fileName;
+        System.out.println("Reading file from: " + fullPath);
+        return new FileInputStream(fullPath);
     }
 }

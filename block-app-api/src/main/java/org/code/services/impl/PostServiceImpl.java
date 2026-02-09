@@ -50,13 +50,21 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostDto updatePost(PostDto postDto,Integer id) {
-        Post byId = this.postRepo.getById(id);
+        Post byId = this.postRepo.findById(id).orElseThrow(() -> new ResouceNotFoundException("Post", "id", id));
         byId.setCreatedDate(new Date());
         byId.setContent(postDto.getContent());
         byId.setImageName(postDto.getImageName());
         byId.setTitle(postDto.getTitle());
         Post save = this.postRepo.save(byId);
         return modelMapper.map(save, PostDto.class);
+    }
+
+    @Override
+    public PostDto updatePostImage(Integer postId, String imageName) {
+        Post post = this.postRepo.findById(postId).orElseThrow(() -> new ResouceNotFoundException("Post", "id", postId));
+        post.setImageName(imageName);
+        Post saved = this.postRepo.save(post);
+        return modelMapper.map(saved, PostDto.class);
     }
 
     @Override
@@ -67,7 +75,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostResponse getAllPosts(Integer pageNumber, Integer pageSize,String sortBy) {
-        PageRequest pageRequest = PageRequest.of(pageNumber-1,pageSize, Sort.by(sortBy));
+        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize, Sort.by(sortBy));
         Page<Post> all1 = this.postRepo.findAll(pageRequest);
         List<Post> all = all1.getContent();
         List<PostDto> collect=all.stream().map(post -> this.modelMapper.map(post, PostDto.class)).collect(Collectors.toList());
